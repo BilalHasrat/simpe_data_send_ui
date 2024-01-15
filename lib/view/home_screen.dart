@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_pro/controller/home_controller.dart';
 import 'package:provider/provider.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -16,14 +17,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
 
-  final titleController = TextEditingController();
-  final descController = TextEditingController();
-
   @override
   void initState() {
     var pro = Provider.of<HomeController>(context,listen: false);
     pro.selectFile = '';
     pro.images = [];
+    pro.fetchCategoryList();
     // TODO: implement initState
     super.initState();
   }
@@ -34,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Size size = MediaQuery.of(context).size;
     return Consumer<HomeController>(builder: (BuildContext context, pro, Widget? child) {
       return WillPopScope(
-
         onWillPop: () {
           if (pro.showEmoji) {
             pro.setEmoji();
@@ -43,15 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
             return Future.value(true);
           }
         },
-
         child: Scaffold(
-
           appBar: AppBar(
             elevation: 5,
             title: const Text('Select Category').animate().fade(duration: Duration(milliseconds: 1500)),
             centerTitle: true,
           ),
-
           body: Padding(
             padding: const EdgeInsets.only(left: 15,right: 15, top: 20),
             child: SingleChildScrollView(
@@ -88,53 +83,83 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(pro.selectCat),
                           InkWell(
                               onTap: (){
-                                pro.setIsListOpen();
+                                pro.setIsCatListOpen();
                               },
-                              child: Icon(pro.isListOpen ? Icons.keyboard_arrow_up :Icons.keyboard_arrow_down)),
+                              child: Icon(pro.isCategoryOpen ? Icons.keyboard_arrow_up :Icons.keyboard_arrow_down,size: 40,color: Colors.blue,)),
                         ],
                       ),
                     ),
-                  ).animate().fade(duration: Duration(milliseconds: 1500)),
+                  ).animate().fade(duration: const Duration(milliseconds: 1500)),
 
-                  if(pro.isListOpen)
+                  if(pro.isCategoryOpen)
                     SizedBox(
-                      height: 260,
-                      child: Expanded(
-                          child: ListView.builder(
-                              itemCount: pro.catList.length,
-                              itemBuilder: (context, index){
-                                return Card(
-                                  color: Colors.white,
-                                  child: ListTile(
-                                    onTap: (){
-                                      pro.setSelectCat(pro.catList[index]);
-                                        pro.isListOpen = false;
+                      height: 300,
+                      child: ListView.builder(
+                          itemCount: pro.categoryList.length,
+                          itemBuilder: (context, index){
+                            return Card(
+                              color: Colors.white,
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                    onTap: () {
+                                      pro.fetchCommunityList(comId: int.parse(pro.categoryList[index].id!));
+                                      pro.subCatIndex(index);
+                                      pro.selectCat = pro.categoryList[index].title.toString();
+                                      pro.setIsSubCatListOpen();
+                                      pro.comunityId = pro.categoryList[index].id.toString();
+
                                     },
-                                    leading: Text('No $index'),
-                                    title: Text(pro.catList[index]),
+                                    leading: Text('Id: ${pro.categoryList[index].id}'),
+                                    title: Text(pro.categoryList[index].title.toString()),
+                                    trailing:  Icon(pro.currentIndex == index ? Icons.keyboard_arrow_up :Icons.keyboard_arrow_down,size: 25,color: Colors.blue,),
                                   ),
-                                );
-                              })),
+                                  pro.currentIndex == index
+                                      ? SizedBox(
+                                    height: size.height * .2,
+                                    child: ListView.builder(
+                                        itemCount: pro.communityList.length,
+                                        itemBuilder: (context, index){
+                                      return pro.communityList.isEmpty ? Text('No Data')
+                                          :ListTile(
+                                        onTap: ()async {
+                                          pro.contactNo = pro.communityList[index];
+                                          pro.setIsCatListOpen();
+                                          pro.setIsSubCatListOpen();
+
+                                          // String url = 'whatsapp://send?phone=+${pro.communityList[index].toString()}';
+                                          // await launchUrl(Uri.parse(url));
+                                        },
+                                        title: Text(pro.communityList[index].toString()),
+                                      );
+                                    }),
+                                  )
+                                      : SizedBox()
+                                ],
+                              ),
+                            );
+                          }),
                     ),
 
-                  SizedBox(height: 20,),
+                  const SizedBox(height: 20,),
 
                   // Title Text
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 15),
                     child: Text('Title (Required)',style: TextStyle(color: Colors.blue),),
                   ),
 
                   MyTextFields(
                     hint: 'Product Title',
-                    controller: titleController,
-                    maxLine: 1,).animate().fade(duration: Duration(milliseconds: 1500)),
+                    controller: pro.titleController,
+                    maxLine: 1,
+                  ).animate().fade(duration: Duration(milliseconds: 1500)),
 
                   SizedBox(height: 20,),
 
                   // Description Text
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 15),
                     child: Text('Description (Required)',style: TextStyle(color: Colors.blue),),
                   ),
 
@@ -145,14 +170,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         pro.setEmoji();
                       },
                     icon: Icon(Icons.emoji_emotions),) ,
-                    controller: descController,
+                    controller: pro.descController,
                     maxLine: null,).animate().fade(duration: Duration(milliseconds: 1500)),
 
                   if (pro.showEmoji)
                     SizedBox(
                       height: size.height * .35,
                       child: EmojiPicker(
-                          textEditingController: descController,
+                          textEditingController: pro.descController,
                           config: Config(
                             bgColor: Colors.brown.shade100,
                             columns: 8,
@@ -165,7 +190,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   // For uploading images
                    myButton(title: 'Upload Images', onTap: () {
                      pro.images = [];
-                     pro.getImageFromGallery(context); }, isRequired: '(Optional)',).animate().fade(duration: Duration(milliseconds: 1500)),
+                     pro.getImageFromGallery(context); },
+                     btnColor: Color(0xff16A9FA),
+                     isRequired: '(Optional)',).animate().fade(duration: Duration(milliseconds: 1500)),
 
                   const SizedBox(height: 10,),
 
@@ -214,9 +241,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10,),
 
                   // For Uploading Attachment
-                  myButton(title: 'Upload Attachment', onTap: (){
+                  myButton(
+                    title: 'Upload Attachment',
+                    onTap: (){
                     pro.getWordFile(context);
-                      }, isRequired: '(Optional)',).animate().fade(duration: Duration(milliseconds: 1500)),
+                      },
+                    btnColor: Color(0xff16A9FA),
+                    isRequired: '(Optional)',).animate().fade(duration: Duration(milliseconds: 1500)),
 
                   const SizedBox(height: 10,),
 
@@ -234,19 +265,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 20,),
 
                   myButton(
-                      color: Colors.blue.shade200,
+                      btnColor: Color(0xff16A9FA),
                       isRequired: '', title: 'Save', onTap: (){
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.green.shade200,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)
-                                ),
-                                content: Text('Data Sent Successfully',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,letterSpacing: 5),),
-
-                            )
-                        );
+                        pro.images.length < 10 ? ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Select upt'))):
+                        pro.shareFile(pro.contactNo,context).then((value) {
+                          pro.createCampaignApi(context);
+                        });
+                      //  pro.fetchCommunityList(comId: pro.selectCatId!);
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(
+                        //       behavior: SnackBarBehavior.floating,
+                        //       backgroundColor: Colors.green.shade200,
+                        //         shape: RoundedRectangleBorder(
+                        //           borderRadius: BorderRadius.circular(20)
+                        //         ),
+                        //         content: Text('Data Sent Successfully',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,letterSpacing: 5),),
+                        //
+                        //     )
+                        // );
                   })
 
 
@@ -264,13 +300,15 @@ class myButton extends StatelessWidget {
   final String title;
   final String isRequired;
   final VoidCallback onTap;
-  Color? color;
+  Color? btnColor;
+  Color? txtColor;
    myButton({
     super.key,
     required this.isRequired,
     required this.title,
     required this.onTap,
-     this.color = Colors.white
+     this.btnColor = Colors.blue,
+     this.txtColor = Colors.white
   });
 
   @override
@@ -281,7 +319,7 @@ class myButton extends StatelessWidget {
         height: 50,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: color,
+          color: btnColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow:  [
           BoxShadow(
@@ -302,8 +340,8 @@ class myButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(title,style: TextStyle(fontSize: 18),),
-            Text(isRequired,style: TextStyle(fontSize: 14),),
+            Text(title,style: TextStyle(fontSize: 18,color: txtColor),),
+            Text(isRequired,style: TextStyle(fontSize: 14,color: txtColor),),
           ],
         ),),
       ),

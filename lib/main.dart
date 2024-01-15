@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pro/controller/home_controller.dart';
 import 'package:flutter_pro/view/home_screen.dart';
+import 'package:flutter_pro/view/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     ),
     );
     
