@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_pro/controller/home_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -123,12 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                       return pro.communityList.isEmpty ? Text('No Data')
                                           :ListTile(
                                         onTap: ()async {
-                                          pro.contactNo = pro.communityList[index];
+                                         pro.contactNo = pro.communityList[index];
                                           pro.setIsCatListOpen();
                                           pro.setIsSubCatListOpen();
 
-                                          // String url = 'whatsapp://send?phone=+${pro.communityList[index].toString()}';
-                                          // await launchUrl(Uri.parse(url));
+
                                         },
                                         title: Text(pro.communityList[index].toString()),
                                       );
@@ -266,11 +267,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   myButton(
                       btnColor: Color(0xff16A9FA),
-                      isRequired: '', title: 'Save', onTap: (){
-                        pro.images.length < 10 ? ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Select upt'))):
-                        pro.shareFile(pro.contactNo,context).then((value) {
-                          pro.createCampaignApi(context);
-                        });
+                      isRequired: '', title: 'Save', onTap: ()async{
+
+                        if(pro.images != null){
+                          pro.shareImageOnWhatsApp();
+                        }
+
+                    // String url = 'whatsapp://send?phone=++${pro.contactNo.toString()}&text=${pro.titleController.text}';
+                    // await launchUrl(Uri.parse(url));
+                        //pro.images.length < 10 ? ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Select upt'))):
+                       // pro.shareFile(pro.contactNo,context).then((value) {
+                         // pro.createCampaignApi(context);
+                       //});
+
                       //  pro.fetchCommunityList(comId: pro.selectCatId!);
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //     SnackBar(

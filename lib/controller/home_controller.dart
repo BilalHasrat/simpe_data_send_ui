@@ -7,6 +7,7 @@ import 'package:flutter_pro/Api_services/api_services.dart';
 import 'package:flutter_pro/model/category_list.dart';
 import 'package:http/http.dart'as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
 
@@ -114,29 +115,10 @@ class HomeController with ChangeNotifier{
         notifyListeners();
       }else{
         print("------- Community list not fetching ------ ");
-
       }
     }catch(e){
       print("------- $e ------ ");
 
-    }
-  }
-
-  // To Open Number in whatsapp
-  Future<void> launchWhatsApp(String phone) async {
-    // Format phone number with country code (without + sign)
-    String formattedPhone = phone.replaceAll('+', '');
-    String url = "https://wa.me/$formattedPhone";
-
-    try {
-      if (await canLaunch(url)) {
-        await launch(url);
-      } else {
-        throw 'Could not launch WhatsApp';
-      }
-    } catch (error) {
-      print(error);
-      throw 'Could not launch WhatsApp';
     }
   }
 
@@ -169,13 +151,31 @@ class HomeController with ChangeNotifier{
   }
 
 
-  Future<void> shareFile(no ,context) async {
-    await WhatsappShare.shareFile(
-      phone: no,
-      text: titleController.text,
-      filePath: [images[0].path,images[1].path,images[2].path],
-    );
+  Future<void> shareImageOnWhatsApp() async {
+    String phone = contactNo; // Replace with the recipient's phone number
+    String text = titleController.text;
+    String imagePath = Uri.encodeFull( images[0].path); // Replace with the actual image path
+    String url = 'whatsapp://send?phone=$phone&text=$text&image=$imagePath';
+
+    try{
+      launchUrl(Uri.parse(url));
+
+    }catch(e){
+      print('----Error launching WhatsApp: $e--------');
+
+    }
   }
+
+
+
+// Future<void> shareFile(no ,context) async {
+  //   await WhatsappShare.shareFile(
+  //     phone: '+923451909646',
+  //     text: titleController.text,
+  //     filePath: [images[0].path,images[1].path,images[2].path],
+  //     package: Package.businessWhatsapp
+  //   );
+  // }
 
 
 
